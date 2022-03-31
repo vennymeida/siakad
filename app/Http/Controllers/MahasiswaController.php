@@ -15,11 +15,23 @@ class MahasiswaController extends Controller
      */
     public function index()
     {
+        if (request('search')) {
+            $paginate = Mahasiswa::where('nama', 'like', '%' . request('search') . '%')
+                                    ->orwhere('nim', 'like', '%' . request('search') . '%')
+                                    ->orwhere('email', 'like', '%' . request('search') . '%')
+                                    ->orwhere('jeniskelamin', 'like', '%' . request('search') . '%')
+                                    ->orwhere('tanggallahir', 'like', '%' . request('search') . '%')
+                                    ->orwhere('alamat', 'like', '%' . request('search') . '%')
+                                    ->orwhere('kelas', 'like', '%' . request('search') . '%')
+                                    ->orwhere('jurusan', 'like', '%' . request('search') . '%')->paginate(5); // Mengambil semua isi tabel
+            return view('mahasiswa.index', ['paginate'=>$paginate]);
+        }else{
         //fungsi eloquent menampilkan data menggunakan pagination
         $mahasiswa = Mahasiswa::all();//mengambil semua isi tabel
-        $paginate = Mahasiswa::orderBy('id_mahasiswa','asc')->paginate(3);
+        $paginate = Mahasiswa::orderBy('id_mahasiswa','asc')->paginate(5);
         return view('mahasiswa.index', ['mahasiswa'=>$mahasiswa,'paginate'=>$paginate]);
     }
+}
 
     /**
      * Show the form for creating a new resource.
@@ -43,6 +55,10 @@ class MahasiswaController extends Controller
         $request->validate([
             'Nim'=>'required',
             'Nama'=>'required',
+            'Email'=>'required',
+            'JenisKelamin'=>'required',
+            'TanggalLahir'=>'required',
+            'Alamat'=>'required',
             'Kelas'=>'required',
             'Jurusan'=>'required',
         ]);
@@ -93,6 +109,10 @@ class MahasiswaController extends Controller
         $request->validate([
             'Nim'=>'required',
             'Nama'=>'required',
+            'Email'=>'required',
+            'JenisKelamin'=>'required',
+            'TanggalLahir'=>'required',
+            'Alamat'=>'required',
             'Kelas'=>'required',
             'Jurusan'=>'required',
         ]);
@@ -102,6 +122,10 @@ class MahasiswaController extends Controller
         ->update([
             'nim'=>$request->Nim,
             'nama'=>$request->Nama,
+            'email'=>$request->Email,
+            'jeniskelamin'=>$request->JenisKelamin,
+            'tanggallahir'=>$request->TanggalLahir,
+            'alamat'=>$request->Alamat,
             'kelas'=>$request->Kelas,
             'jurusan'=>$request->Jurusan,
         ]);
