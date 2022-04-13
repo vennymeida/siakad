@@ -50,7 +50,7 @@
         <td>{{ $mhs ->jeniskelamin }}</td>
         <td>{{ $mhs ->tanggallahir }}</td>
         <td>{{ $mhs ->alamat }}</td>
-        <td>{{ $mhs ->kelas }}</td>
+        <td>{{ $mhs ->kelas->nama_kelas }}</td>
         <td>{{ $mhs ->jurusan }}</td>
         <td>
     <form action="{{ route('mahasiswa.destroy',['mahasiswa'=>$mhs->nim]) }}" method="POST">
