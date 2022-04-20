@@ -8,6 +8,7 @@ use App\Models\MataKuliah;
 use App\Models\Mahasiswa_MataKuliah;
 use App\Models\Kelas;
 use Illuminate\Support\Facades\DB;
+use PDF;
 
 class MahasiswaController extends Controller
 {
@@ -31,7 +32,7 @@ class MahasiswaController extends Controller
         }else{
         //fungsi eloquent menampilkan data menggunakan pagination
         $Mahasiswa = Mahasiswa::with('kelas')->get();
-        $paginate = Mahasiswa::orderBy('id_mahasiswa','asc')->paginate(5);
+        $paginate = Mahasiswa::orderBy('id_mahasiswa','asc')->paginate(3);
         return view('mahasiswa.index', ['mahasiswa'=>$Mahasiswa,'paginate'=>$paginate]);
     }
 }
@@ -55,6 +56,9 @@ class MahasiswaController extends Controller
      */
     public function store(Request $request)
     {
+        // if ($request->file('image')){
+        //     $image_name = $request->file('image')->store('images','public');
+        // }
         //melakukan validasi data
         $request->validate([
             'Nim'=>'required',
@@ -65,7 +69,13 @@ class MahasiswaController extends Controller
             'Alamat'=>'required',
             'Kelas'=>'required',
             'Jurusan'=>'required',
+            'featured_image' => 'required',
         ]);
+
+        $image_name = '';
+        if ($request->file('featured_image')) {
+            $image_name = $request->file('featured_image')->store('images', 'public');
+        }
 
         $Mahasiswa = new Mahasiswa;
         $Mahasiswa->nim = $request->get('Nim');
@@ -75,6 +85,7 @@ class MahasiswaController extends Controller
         $Mahasiswa->tanggallahir = $request->get('TanggalLahir');
         $Mahasiswa->alamat = $request->get('Alamat');
         $Mahasiswa->jurusan = $request->get('Jurusan');
+        $Mahasiswa->featured_image = $image_name;
         // $Mahasiswa->save();
 
         $kelas = new Kelas;
@@ -142,6 +153,7 @@ class MahasiswaController extends Controller
             'Alamat'=>'required',
             'Kelas'=>'required',
             'Jurusan'=>'required',
+            'featured_image' => 'required',
         ]);
 
         // //fungsi eloquent untuk mengupdate data inputan kita
@@ -160,7 +172,22 @@ class MahasiswaController extends Controller
         $Mahasiswa = Mahasiswa::with('kelas')->where('nim', $nim)->first();
         $Mahasiswa->nim = $request->get('Nim');
         $Mahasiswa->nama = $request->get('Nama');
+        $Mahasiswa->email = $request->get('Email');
+        $Mahasiswa->jeniskelamin = $request->get('JenisKelamin');
+        $Mahasiswa->tanggallahir = $request->get('TanggalLahir');
+        $Mahasiswa->alamat = $request->get('Alamat');
         $Mahasiswa->jurusan = $request->get('Jurusan');
+        
+        if ($Mahasiswa->featured_image && file_exists(storage_path('app/public/'. $Mahasiswa->featured_image))) {
+            Storage::delete('public/'. $Mahasiswa->featured_image);
+        }
+
+        $image_name = '';
+        if ($request->file('featured_image')) {
+        $image_name = $request->file('featured_image')->store('images', 'public');
+        }
+
+        $Mahasiswa->featured_image = $image_name;
         $Mahasiswa->save();
 
         $kelas = new Kelas;
@@ -195,5 +222,17 @@ class MahasiswaController extends Controller
         $mahasiswa = Mahasiswa_MataKuliah::with('matakuliah')->where('mahasiswa_id', $Nim)->get();
         $mahasiswa->mahasiswa = Mahasiswa::with('kelas')->where('id_mahasiswa', $Nim)->first();
         return view('mahasiswa.nilai', ['mahasiswa' => $mahasiswa]);
+    }
+
+    public function nilai_pdf($nim){
+        // dd('tetsing');
+        $Mahasiswa = Mahasiswa::where('nim', $nim)->first();
+        $nilai = Mahasiswa_MataKuliah::where('mahasiswa_id', $Mahasiswa->id_mahasiswa)
+                                       ->with('matakuliah')
+                                       ->with('mahasiswa')
+                                       ->get();
+        $nilai->mahasiswa = Mahasiswa::with('kelas')->where('nim', $nim)->first();
+        $pdf = PDF::loadview('mahasiswa.nilai_pdf', compact('nilai'));
+        return $pdf->stream();
     }
 };
